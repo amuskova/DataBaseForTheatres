@@ -1,0 +1,163 @@
+Изгледи
+_________________________________________________________________________________________________________________
+1. Създайте изглед, който извежда средния брой продадени билети за всяко представление
+
+CREATE view vM_AverageSoldTickets
+AS
+SELECT PerformanceName, PremiereDate, AVG(SoldTickets) AS AvarageTickets
+FROM Attendences
+GROUP BY PerformanceName, PremiereDate;
+
+2. Създайте изглед, който извежда най-евтиния билет за всяко представление
+
+CREATE view vM_CheapestTicket
+AS
+SELECT PERFORMANCENAME, PremiereDate, Min(Price) AS CheapestTicketPrice
+FROM Tickets
+GROUP BY PerformanceName, PremiereDate;
+
+3. Създайте изглед, който извежда колко представления има на всяка дата
+
+CREATE view vM_PerformanceCount
+AS
+SELECT Date, COUNT(PerformanceName) AS PerformanceCount
+FROM Schedule
+GROUP BY Date;
+
+4. Създайте изглед, който извежда 10 града с най-големия брой театри във всеки град, 
+основани след 1915 година, подредени в намаляващ ред
+
+CREATE view vM_TheatersCountInCities
+AS
+SELECT TOP 10 City, COUNT(T.Name) AS TheaterCount
+FROM (SELECT * 
+		FROM Theaters
+		WHERE YEAR > 1915) AS T
+GROUP BY T.City
+ORDER BY COUNT(T.Name) DESC;
+
+5. Създайте изглед, който извежда броя билети, предлагани на различна цена за всяко представление
+
+CREATE view vM_NumberOfTicketsWithDifferentPrice
+AS
+SELECT PerformanceName, PremiereDate, Price, COUNT(Price) AS CountForThePrice
+FROM Tickets
+GROUP BY PerformanceName, PremiereDate, Price;
+
+6. Създайте изглед, който извежда представленията, в които участва поне една жена
+
+CREATE view vM_PerformanceWithActresses
+AS
+SELECT PerformanceName, PremiereDate
+FROM StarsIn, Actors
+WHERE ActorName = Actors.Name AND Actors.Gender = 'F';
+
+7. Създайте изглед, който извежда гостуващите представления, които оригинално се играят в Народния театър
+
+CREATE view vM_PerformanceInNationalTheater
+AS
+SELECT DISTINCT PerformanceName, PremiereDate
+FROM Schedule
+WHERE HomeTheater = 'National Theater "Ivan Vazov"';
+
+8. Създайте изглед, който извежда пощенския код, името на града, името на областта, името на театъра и неговия адрес, 
+където името на театъра започва с буквата "D".
+
+CREATE view vMTheaters_with_D
+AS
+SELECT Cities.Code, 
+Cities.Name as City, 
+Cities.Region, 
+Theaters.Name as TheaterName,
+Theaters.Address as TheaterAddress
+FROM Cities
+INNER JOIN Theaters ON Theaters.City = Cities.Name AND Theaters.Region = Cities.Region
+WHERE Theaters.Name LIKE 'D%'
+GROUP BY Cities.Code, Cities.Name, Cities.Region, Theaters.Name, Theaters.Address
+
+9. Създайте изглед, който извежда име на постановка, премиерна дата и общ брой на актьорите, които участват в дадената
+постановка и са от мъжки пол, както и броя на актьорите за всяка постановка
+
+CREATE view vMPerformancesWithMaleActors
+AS
+SELECT PerformanceName, 
+PremiereDate, 
+COUNT_BIG(*) as MaleActors 
+FROM StarsIn
+INNER JOIN Actors ON StarsIn.ActorName = Actors.Name
+WHERE Actors.Gender = 'M'
+GROUP BY PerformanceName, PremiereDate
+
+10. Създайте изглед, който извежда име на театър, адрес, телефон и имейл, всички събрани пари от изиграни постановки и
+броя на срещанията на всеки театър
+
+CREATE View vMCollectedMoney
+AS
+SELECT Name, Address, PhoneNumber, Email, 
+SUM(ISNULL(Attendences.SoldTickets, 0)) as CollectedMoney,
+COUNT_BIG(*) as Number
+FROM Theaters
+INNER JOIN Attendences ON Attendences.TheaterName = Name
+GROUP BY Name, Address, PhoneNumber, Email
+
+11. Създайте изглед, който извежда име на постановка, премиерна дата, жанр и възрастово ограничение,
+където ограничението е над 12-годишна възраст
+
+CREATE view vMAgeLimit
+AS
+SELECT Name, PremiereDate, Genre, AgeLimit
+FROM Performances
+WHERE AgeLimit > 12
+
+12. Да се промени възрастовото ограничение на постановката 'The Goat or Who Is Sylvia' от 16 години на 18 години
+в изгледа vMAgeLimit
+
+UPDATE vMAgeLimit
+SET AgeLimit=18
+WHERE Name='The Goat or Who Is Sylvia?'
+
+13. Изтрийте изгледа vMAgeLimit
+
+DROP view vMAgeLimit
+
+14. Създайте изглед, който да извежда име, рождена дата, пол, роден град и държава на всички актриси
+
+CREATE view vMFemaleActors
+AS
+SELECT Name, Birthdate, Gender, HomeTown, Country
+FROM Actors 
+WHERE Gender = 'F'
+
+15. Добавете в изгледа vMFemaleActors данни за актрисата Angeline Jolie
+
+INSERT INTO vMFemaleActors(Name, BirthDate, Gender, HomeTown, Country)
+VALUES('Angelina Jolie', '1975-06-04', 'F', 'Los Angeles', 'USA')
+
+16. Изтрийте от изгледа vMFemaleActors всички актриси, които не са от България
+
+DELETE FROM vMFemaleActors WHERE Country NOT LIKE 'Bulgaria'
+______________________________________________________________________________________________________________________
+
+Индекси:
+______________________________________________________________________________________________________________________
+1. Създайте подходящи индекси за таблиците Theaters, Performances и Schedule
+
+1.1 Theaters
+CREATE Nonclustered Index UIX_Theaters
+on Theaters(Name)
+
+1.2 Performances
+CREATE Nonclustered Index UIX_Performances
+on Performances(Name, PremiereDate)
+
+CREATE Nonclustered Index UIX_Performances_AgeLimit
+on Performances(AgeLimit)
+
+1.3 Schedule
+CREATE Nonclustered Index UIX_Schedule
+on Schedule(PerformanceName, TheaterName)
+
+2. Изтрийте някой от създадените индекси
+
+DROP INDEX UIX_Performances ON Performances
+______________________________________________________________________________________________________________________

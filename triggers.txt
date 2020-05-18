@@ -1,0 +1,95 @@
+CREATE TABLE Actors_audits(
+ Name VARCHAR(100) NOT NULL,
+ BirthDate DATE,
+ Gender CHAR(1) NOT NULL,
+ HomeTown VARCHAR(20) NOT NULL,
+ Country VARCHAR(50) NOT NULL,
+ IsDeleted VARCHAR(3) DEFAULT 'NO',
+ WhenDeleted DATE,
+ UpdatedAt DATE
+);
+
+CREATE TRIGGER SoftDelete_Actors ON Actors
+INSTEAD OF DELETE AS
+BEGIN
+SET NOCOUNT ON;
+UPDATE Actors
+SET IsDeleted = 'YES', WhenDeleted = GetDate()
+WHERE Name IN (SELECT Name FROM deleted);
+END
+GO
+
+CREATE TRIGGER Actors_update_audits ON Actors
+AFTER UPDATE AS
+BEGIN
+INSERT INTO Actors_audits (Name, BirthDate, Gender, HomeTown, Country, IsDeleted, WhenDeleted, UpdatedAt)
+(Select Name, BirthDate, Gender, HomeTown, Country, IsDeleted, WhenDeleted, GetDate()
+FROM deleted);
+END
+GO
+---------------------------------------------------------------------------------------------------
+CREATE TABLE Performances_audits(
+ Name VARCHAR(255) NOT NULL,
+ Producer VARCHAR(100) NOT NULL,
+ Duration INT NOT NULL, CHECK(Duration > 0),
+ PremiereDate DATE NOT NULL,
+ Genre VARCHAR(20),
+ AgeLimit INT,
+ Playwright VARCHAR(100),
+ CostumeDesigner VARCHAR(100),
+ Country VARCHAR(50) 
+ IsDeleted VARCHAR(3) DEFAULT 'NO',
+ WhenDeleted DATE,
+ UpdatedAt DATE
+);
+
+CREATE TRIGGER SoftDelete_Performances ON Performances
+INSTEAD OF DELETE AS
+BEGIN
+SET NOCOUNT ON;
+UPDATE Performances
+SET IsDeleted = 'YES', WhenDeleted = GetDate()
+WHERE Name IN (SELECT Name FROM deleted) AND PremiereDate IN (SELECT PremiereDate FROM deleted);
+END
+GO
+
+CREATE TRIGGER Performances_update_audits ON Performances
+AFTER UPDATE AS
+BEGIN
+INSERT INTO Performances_audits (Name, Producer, Duration, PremiereDate, Genre, AgeLimit, Playwright, CostumeDesigner, Country, IsDeleted, WhenDeleted, UpdatedAt)
+(Select Name, Producer, Duration, PremiereDate, Genre, AgeLimit, Playwright, CostumeDesigner, Country, IsDeleted, WhenDeleted, GetDate()
+FROM deleted);
+END
+GO
+---------------------------------------------------------------------------------------------------
+CREATE TABLE Theaters_audits(
+ Name VARCHAR(100) NOT NULL,
+ Year INT NOT NULL CHECK (Year > 0),
+ Address VARCHAR(100),
+ City VARCHAR(20) NOT NULL,
+ Region VARCHAR(20) NOT NULL,
+ PhoneNumber VARCHAR(64),
+ Email VARCHAR(64)
+ IsDeleted VARCHAR(3) DEFAULT 'NO',
+ WhenDeleted DATE, 
+ UpdatedAt DATE
+);
+
+CREATE TRIGGER SoftDelete_Theaters ON Theaters
+INSTEAD OF DELETE AS
+BEGIN
+SET NOCOUNT ON;
+UPDATE Theaters
+SET IsDeleted = 'YES', WhenDeleted = GetDate()
+WHERE Name IN (SELECT Name FROM deleted);
+END
+GO
+
+CREATE TRIGGER Theaters_update_audits ON Theaters
+AFTER UPDATE AS
+BEGIN
+INSERT INTO Theaters_audits (Name, Year, Address, City, Region, PhoneNumber,Email , IsDeleted, WhenDeleted, UpdatedAt)
+(Select Name, Year, Address, City, Region, PhoneNumber,Email , IsDeleted, WhenDeleted, GetDate()
+FROM deleted);
+END
+GO
